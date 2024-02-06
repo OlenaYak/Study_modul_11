@@ -124,7 +124,7 @@ class AddressBook(UserDict):
         records = list(self.data.values())
         for i in range(0, len(records), N):
             yield records[i:i+N]
-            
+
     def add_record(self, record): 
         self.data[record.name.value] = record
 
@@ -138,4 +138,8 @@ class AddressBook(UserDict):
 
 if __name__ == '__main__':
     book = AddressBook()
+
+
+    
+
 
