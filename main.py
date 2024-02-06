@@ -27,16 +27,16 @@ class Phone(Field):
 
     @property
     def value(self):
-        return self.value
+        return self._value
     
     @value.setter
     def value(self, new_value):
-        self.value = new_value
+        self._value = new_value
         self._phone_valid()
 
     def _phone_valid(self):
-        if self.value is not None:
-            if len(self.value) != 10 or not self.value.isdigit():
+        if self._value is not None:
+            if len(self._value) != 10 or not self._value.isdigit():
                 raise ValueError("Incorrect number: phone must contain 10 digit!")
 
 class Birthday(Field):
@@ -44,22 +44,25 @@ class Birthday(Field):
         super().__init__(value)
         self._bday_valid()
     
+    def _bday_valid(self):
+        if self.value is None:
+            raise ValueError("No date of birth, should be YYYY-MM-DD")
+        else:
+            try:
+                datetime.strptime(self.value, '%Y-%m-%d')
+            except ValueError:
+                #print("Date of birth should be YYYY-MM-DD")
+                raise ValueError("Wrong format, date of birth should be YYYY-MM-DD")
+        
     @property
     def value(self):
-        return self.value
-    
+        return self._value
+        
     @value.setter
     def value(self, new_value):
-        self.value = new_value
+        self._value = new_value
         self._bday_valid()
-
-    def _bday_valid(self):
-        try:
-            datetime.strptime(self.value, '%Y-%m-%d')
-            return True
-        except ValueError:
-            return False
-        
+    
     def days_to_birthday(self):
         today = datetime.now()
         bday_date = datetime.strptime(self.value, '%Y-%m-%d')
@@ -73,10 +76,11 @@ class Record:
     def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
-        self.birthday = Birthday(birthday)
+        self.birthday = Birthday(birthday) if birthday else None
 
     def add_phone(self, phone_number):
-        phone = Phone(phone_number)                 
+        phone = Phone(phone_number)
+        phone._phone_valid()                 
         self.phones.append(phone)
 
     def remove_phone(self, phone_number):
@@ -100,7 +104,7 @@ class Record:
         return None
     
     def days_to_birthday(self):
-        if self.birthday.value:
+        if self.birthday:
             return self.birthday.days_to_birthday()
         return None
 
