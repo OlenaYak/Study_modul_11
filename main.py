@@ -1,50 +1,58 @@
 from collections import UserDict
 from datetime import datetime
 
-
 class Field:
     def __init__(self, value):
-        self._value = value
+        if not self.validate(value):
+            raise ValueError
+        self.__value = value
 
+    def validate(self, value):
+        return True
+    
     @property
     def value(self):
-        return self._value
+        return self.__value
     
     @value.setter
     def value(self, new_value):
-        self._value = new_value
+        if not self.validate(new_value):
+            raise ValueError
+        self.__value = new_value
     
     def __str__(self):
-        return str(self._value)
+        return str(self.__value)
 
 class Name(Field): 
     pass
 
 class Phone(Field):
     def __init__(self, value):
-        super().__init__(value)
-        self._phone_valid()
-
+        if self.validate(value): #_phone_valid
+            self.__value = value
+        else:
+            raise ValueError("Incorrect number: phone must contain 10 digit!")
+           
     @property
     def value(self):
-        return self._value
+        return self.__value
     
     @value.setter
     def value(self, new_value):
-        self._value = new_value
-        self._phone_valid()
+        if self.validate(new_value): #_phone_valid
+            self.__value = new_value
+        else:
+            raise ValueError("Incorrect number: phone must contain 10 digit!")
 
-    def _phone_valid(self):
-        if self._value is not None:
-            if len(self._value) != 10 or not self._value.isdigit():
-                raise ValueError("Incorrect number: phone must contain 10 digit!")
-
+    def validate(self, value):   # def _phone_valid
+        return len(value) == 10 and value.isdigit()
+        
 class Birthday(Field):
     def __init__(self, value=None):
         super().__init__(value)
-        self._bday_valid()
+        self.validate()   # _bday_valid
     
-    def _bday_valid(self):
+    def validate(self):   # _bday_valid
         if self.value is None:
             raise ValueError("No date of birth, should be YYYY-MM-DD")
         else:
@@ -61,7 +69,7 @@ class Birthday(Field):
     @value.setter
     def value(self, new_value):
         self._value = new_value
-        self._bday_valid()
+        self.validate()   # _bday_valid
     
     def days_to_birthday(self):
         today = datetime.now()
@@ -80,7 +88,7 @@ class Record:
 
     def add_phone(self, phone_number):
         phone = Phone(phone_number)
-        phone._phone_valid()                 
+        phone.validate(phone_number)    # _phone_valid              
         self.phones.append(phone)
 
     def remove_phone(self, phone_number):
@@ -92,7 +100,7 @@ class Record:
         for phone in self.phones:
             if phone.value == old_phone:
                 new_phone_check = Phone(new_phone)
-                new_phone_check._phone_valid()
+                new_phone_check.validate(new_phone)   # _phone_valid
                 phone.value = new_phone
                 return       
         raise ValueError(f'{old_phone} not exist')
@@ -112,19 +120,11 @@ class Record:
         return f"Contact name: {self.name.value}, phones: {'; '.join(phone.value for phone in self.phones)}"
 
 class AddressBook(UserDict):
-    def __iter__(self, pages_count):
-        count = 0
-        pages_now = []
-        for record in self:
-            pages_now.append(record)
-            count += 1
-            if count == pages_count:
-                yield pages_now
-                pages_now = []
-                count = 0
-            if pages_now:
-                yield pages_now
-
+    def iterator(self, N):
+        records = list(self.data.values())
+        for i in range(0, len(records), N):
+            yield records[i:i+N]
+            
     def add_record(self, record): 
         self.data[record.name.value] = record
 
@@ -138,3 +138,4 @@ class AddressBook(UserDict):
 
 if __name__ == '__main__':
     book = AddressBook()
+
